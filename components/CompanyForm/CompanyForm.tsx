@@ -41,6 +41,7 @@ const formSchema = z
     }
   )
   .refine(
+    // will throw a validation error if company name not provided when account type = company
     (data) => {
       if (data.accountType === "company") {
         return !!data.companyName;
@@ -63,6 +64,7 @@ export const CompanyForm = () => {
     },
   });
 
+  // Allows us to keep track of what the account type is to conditionally display company name field
   const accountType = form.watch("accountType");
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
