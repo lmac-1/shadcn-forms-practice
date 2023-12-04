@@ -11,13 +11,23 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z
   .object({
     emailAddress: z.string().email(),
     password: z.string().min(3),
     confirmPassword: z.string(),
+    accountType: z.enum(["personal", "company"]),
+    // company name is optional when personal accounts, we'll define the validation for company accounts below
+    companyName: z.string().optional(),
   })
   .refine(
     // Define a callback function returning true if valid, false if invalid
@@ -28,6 +38,18 @@ const formSchema = z
     {
       message: "Passwords do not match",
       path: ["confirmPassword"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.accountType === "company") {
+        return !!data.companyName;
+      }
+      return true;
+    },
+    {
+      message: "Company name is required",
+      path: ["companyName"],
     }
   );
 
@@ -40,6 +62,8 @@ export const CompanyForm = () => {
       confirmPassword: "",
     },
   });
+
+  const accountType = form.watch("accountType");
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log({ values });
@@ -64,6 +88,43 @@ export const CompanyForm = () => {
             </FormItem>
           )}
         ></FormField>
+        <FormField
+          control={form.control}
+          name="accountType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Account type</FormLabel>
+              <Select onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an account type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="personal">Personal</SelectItem>
+                  <SelectItem value="company">Company</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        ></FormField>
+        {accountType === "company" && (
+          <FormField
+            control={form.control}
+            name="companyName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Company name" {...field} />
+                </FormControl>
+                {/* This displays the error message */}
+                <FormMessage />
+              </FormItem>
+            )}
+          ></FormField>
+        )}
         <FormField
           control={form.control}
           name="password"
@@ -94,6 +155,7 @@ export const CompanyForm = () => {
             </FormItem>
           )}
         ></FormField>
+
         <Button type="submit">Submit</Button>
       </form>
     </Form>
